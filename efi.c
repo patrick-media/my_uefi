@@ -1,3 +1,20 @@
+/*
+MY BUILD COMMAND:
+x86_64-w64-mingw32-gcc
+        efi.c
+        -std=c17
+        -Wall
+        -Wextra
+        -Wpedantic
+        -mno-red-zone
+        -ffreestanding
+        -nostdlib
+        "-Wl,--subsystem,10"
+        -e efi_main
+        -o BOOTX64.EFI
+
+this is for my main file, the other file has the exact same arguments aside from the file name (sh.c), entry point (-e sh_main) and output file (-o SHX64.EFI)
+*/
 EFI_GUID loaded_image_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
 EFI_LOADED_IMAGE_PROTOCOL *LoadedImage = NULL; // loaded image protocol "object"
 CHAR16 path[ 10 ] = u"SHX64.EFI"; // file path - this is unused right now
