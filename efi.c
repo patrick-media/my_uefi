@@ -1,4 +1,8 @@
-#include"efi.h"
+#include "efi.h"
+#include "efistdarg.h" 
+
+typedef EFI_SIMPLE_TEXT_OUT_PROTOCOL EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
+typedef EFI_SIMPLE_TEXT_IN_PROTOCOL EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
 
 EFI_GUID g_loaded_image_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID; // guid for loaded image protocol - allows accessing image functions
 EFI_GUID g_device_path_protocol_guid = EFI_DEVICE_PATH_PROTOCOL_GUID;
@@ -500,15 +504,24 @@ UINTN menu_exit( void ) {
     return EFI_SUCCESS; // should never execute
 }
 
+UINTN StrSize(CONST CHAR16* String) 
+{
+	UINTN Index;
+	
+	for(Index = 0; String[Index] != u'\0'; Index++);
+	
+	return (Index+1)*sizeof(*String);	
+}
+
 EFI_STATUS DevicePathLength( CONST EFI_DEVICE_PATH_PROTOCOL *DevicePath, UINTN *Length ) {
     UINTN length_total = 0;
     UINT16 length_current = 0;
-    EFI_DEVICE_PATH_PROTOCOL *CurrentNode = NULL;
+    CONST EFI_DEVICE_PATH_PROTOCOL *CurrentNode = NULL;
     if( !DevicePath || !Length ) return EFI_INVALID_PARAMETER;
     *Length = 0;
     for(    CurrentNode = DevicePath;
-            CurrentNode->Type != 0x7F, CurrentNode->SubType != 0xFF;
-            CurrentNode = ( EFI_DEVICE_PATH_PROTOCOL* )( UINT8* )CurrentNode + *( ( UINT16* )CurrentNode->Length ) ) {
+            CurrentNode->Type != 0x7F && CurrentNode->SubType != 0xFF;
+            CurrentNode = ( EFI_DEVICE_PATH_PROTOCOL* ) ( ( ( UINT8* )CurrentNode ) + *( ( UINT16* )CurrentNode->Length ) ) ) {
         length_current = *( ( UINT16* )CurrentNode->Length );
         if( length_current < sizeof( EFI_DEVICE_PATH_PROTOCOL ) ) return EFI_INVALID_PARAMETER;
         length_total += ( UINTN )length_current;
@@ -528,7 +541,7 @@ EFI_STATUS LoadFile( CONST CHAR16 *Path, EFI_HANDLE ImageHandle ) {
     UINT8 *ByteHelper = NULL;
     EFI_HANDLE ImageToLoad = NULL;
     if( !Path ) return EFI_INVALID_PARAMETER;
-    sz_path = strlen( Path );
+    sz_path = StrSize( Path );
     status = bs->HandleProtocol( ImageHandle, &g_loaded_image_guid, ( VOID** )&LoadedImage );
     if( EFI_ERROR( status ) ) {
         printf( u"Error: HandleProtocol with Loaded Image Protocol. 0x%x\r\n", status );
